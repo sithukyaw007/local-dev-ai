@@ -10,15 +10,16 @@ from mlx_lm.generate import make_sampler
 
 MODEL_ID = "mlx-community/Qwen3.5-35B-A3B-4bit"
 
-DEFAULT_MAX_TOKENS = 1024
+DEFAULT_MAX_TOKENS = 4096
 DEFAULT_TEMP = 0.7
 DEFAULT_SYSTEM = "You are Qwen, a helpful AI assistant. Be concise and accurate."
 
 
-def build_prompt(tokenizer, messages: list[dict]) -> str:
+def build_prompt(tokenizer, messages: list[dict], enable_thinking: bool = True) -> str:
     """Apply the model's chat template to format the conversation."""
     return tokenizer.apply_chat_template(
-        messages, tokenize=False, add_generation_prompt=True
+        messages, tokenize=False, add_generation_prompt=True,
+        enable_thinking=enable_thinking,
     )
 
 
@@ -29,11 +30,14 @@ def main():
     parser.add_argument("--top-p", type=float, default=0.9, help="Top-p (nucleus) sampling")
     parser.add_argument("--system", default=DEFAULT_SYSTEM, help="System prompt")
     parser.add_argument("--model", default=MODEL_ID, help="HuggingFace model ID")
+    parser.add_argument("--no-think", action="store_true",
+                        help="Disable thinking mode (faster, fewer tokens, but less reasoning)")
     args = parser.parse_args()
 
     print(f"Loading model: {args.model}")
     model, tokenizer = load(args.model)
-    print("Model loaded! Type 'quit' or Ctrl+C to exit.\n")
+    think_status = "OFF" if args.no_think else "ON"
+    print(f"Model loaded! Thinking: {think_status}. Type 'quit' or Ctrl+C to exit.\n")
 
     sampler = make_sampler(temp=args.temperature, top_p=args.top_p)
     messages = [{"role": "system", "content": args.system}]
@@ -52,7 +56,7 @@ def main():
             break
 
         messages.append({"role": "user", "content": user_input})
-        prompt = build_prompt(tokenizer, messages)
+        prompt = build_prompt(tokenizer, messages, enable_thinking=not args.no_think)
 
         print("\033[1;34mAssistant:\033[0m ", end="", flush=True)
 

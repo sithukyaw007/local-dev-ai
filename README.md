@@ -82,17 +82,38 @@ The agent automatically decides when to search the web vs. answer from knowledge
 
 **run_generate.py / run_chat.py** (direct MLX-LM):
 - `-p / --prompt` — input prompt (generate only)
-- `-m / --max-tokens` — max tokens to generate (default: 512 / 1024)
+- `-m / --max-tokens` — max tokens to generate (default: 2048 / 4096)
 - `-t / --temperature` — sampling temperature (default: 0.7)
 - `--top-p` — nucleus sampling threshold (default: 0.9)
 - `--system` — system prompt (chat only)
 - `--model` — override HuggingFace model ID
+- `--no-think` — disable thinking mode (see below)
 
 **run_agent.py** (server-based, tool calling):
 - `-p / --port` — server port (default: 8000)
-- `-m / --max-tokens` — max tokens per response (default: 1024)
+- `-m / --max-tokens` — max tokens per response (default: 4096)
 - `-t / --temperature` — sampling temperature (default: 0.7)
 - `--system` — system prompt
+- `--no-think` — disable thinking mode (see below)
+
+## Thinking Mode
+
+Qwen3.5 has a **thinking mode** (enabled by default) that generates internal reasoning in `<think>...</think>` tags before producing the visible answer. This improves quality on complex reasoning/coding/math tasks but consumes **~700-750 extra tokens** per response.
+
+| Mode | Tokens for "What is Python?" | Quality | Speed |
+|------|------------------------------|---------|-------|
+| **Thinking ON** (default) | ~795 (744 thinking + 51 answer) | Best for reasoning | Slower |
+| **Thinking OFF** (`--no-think`) | ~57 (answer only) | Good for simple Q&A | ~14x fewer tokens |
+
+```bash
+# Default: thinking enabled (better reasoning, uses more tokens)
+python run_generate.py --prompt "Solve this step by step: what is 23 * 47?"
+
+# Disable thinking: faster, more concise (good for simple questions)
+python run_generate.py --no-think --prompt "What is Python?"
+python run_chat.py --no-think
+python run_agent.py --no-think
+```
 
 ## Architecture
 

@@ -18,7 +18,7 @@ from tools import web_search
 load_dotenv()
 
 DEFAULT_PORT = 8000
-DEFAULT_MAX_TOKENS = 1024
+DEFAULT_MAX_TOKENS = 4096
 DEFAULT_TEMP = 0.7
 DEFAULT_SYSTEM = (
     "You are a helpful AI assistant with access to web search. "
@@ -47,8 +47,13 @@ def execute_tool_call(name: str, arguments: dict) -> str:
 
 
 def run_with_tools(client: OpenAI, model: str, messages: list[dict],
-                   tools: list[dict], max_tokens: int, temperature: float) -> str:
+                   tools: list[dict], max_tokens: int, temperature: float,
+                   enable_thinking: bool = True) -> str:
     """Send a message and handle the tool-calling loop until a final answer."""
+    extra_body = {}
+    if not enable_thinking:
+        extra_body["chat_template_kwargs"] = {"enable_thinking": False}
+
     while True:
         response = client.chat.completions.create(
             model=model,
@@ -56,6 +61,7 @@ def run_with_tools(client: OpenAI, model: str, messages: list[dict],
             tools=tools,
             max_tokens=max_tokens,
             temperature=temperature,
+            extra_body=extra_body if extra_body else None,
         )
 
         choice = response.choices[0]
@@ -95,6 +101,8 @@ def main():
     parser.add_argument("-t", "--temperature", type=float, default=DEFAULT_TEMP,
                         help="Sampling temperature")
     parser.add_argument("--system", default=DEFAULT_SYSTEM, help="System prompt")
+    parser.add_argument("--no-think", action="store_true",
+                        help="Disable thinking mode (faster, fewer tokens, but less reasoning)")
     args = parser.parse_args()
 
     base_url = f"http://localhost:{args.port}/v1"
@@ -140,6 +148,7 @@ def main():
                 client, model_id, messages, tools,
                 max_tokens=args.max_tokens,
                 temperature=args.temperature,
+                enable_thinking=not args.no_think,
             )
             print(f"\n{answer}\n")
             messages.append({"role": "assistant", "content": answer})
