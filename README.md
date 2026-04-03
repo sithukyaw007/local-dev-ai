@@ -61,11 +61,16 @@ This mode gives the model access to real-time web search via Tavily.
 
 **Step 1: Start the server** (in a separate terminal):
 ```bash
-./start_server.sh          # default port 8000
-./start_server.sh 9000     # custom port
+./start_server.sh              # default: port 8000, DEBUG logging
+./start_server.sh 8000 INFO    # INFO logging (less verbose)
 ```
 
-**Step 2: Run the agent** (in another terminal):
+**Step 2: Stream the logs** (in another terminal):
+```bash
+tail -f logs/mlx-server.log
+```
+
+**Step 3: Run the agent** (in another terminal):
 ```bash
 source .venv/bin/activate
 python run_agent.py
@@ -148,6 +153,25 @@ On M4 Max (64 GB):
 - Model load: ~5–10s (first load), ~2–3s (cached)
 - Generation: ~134 tokens/sec
 - RAM usage: ~19.6 GB (leaves ~44 GB free for other tools)
+
+## Server Logging
+
+The server logs to `logs/mlx-server.log`. Stream with `tail -f logs/mlx-server.log`.
+
+```bash
+# DEBUG (default) — full request/response payloads, token-by-token output
+./start_server.sh 8000 DEBUG
+
+# INFO — prompt processing progress, KV cache stats, HTTP status codes only
+./start_server.sh 8000 INFO
+```
+
+| Level | What's Logged |
+|-------|---------------|
+| **DEBUG** | Incoming request body (messages, params), each generated token, full outgoing response JSON |
+| **INFO** | Prompt processing progress, KV cache size, HTTP request/response status |
+| **WARNING** | Unusual conditions (e.g., missing stop tokens) |
+| **ERROR** | Request failures, JSON parse errors |
 
 ## Adding More Tools
 
