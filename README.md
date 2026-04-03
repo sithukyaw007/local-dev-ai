@@ -82,7 +82,7 @@ The agent automatically decides when to search the web vs. answer from knowledge
 
 **run_generate.py / run_chat.py** (direct MLX-LM):
 - `-p / --prompt` — input prompt (generate only)
-- `-m / --max-tokens` — max tokens to generate (default: 2048 / 4096)
+- `-m / --max-tokens` — max tokens to generate (default: 8192 / 16384)
 - `-t / --temperature` — sampling temperature (default: 0.7)
 - `--top-p` — nucleus sampling threshold (default: 0.9)
 - `--system` — system prompt (chat only)
@@ -91,7 +91,7 @@ The agent automatically decides when to search the web vs. answer from knowledge
 
 **run_agent.py** (server-based, tool calling):
 - `-p / --port` — server port (default: 8000)
-- `-m / --max-tokens` — max tokens per response (default: 4096)
+- `-m / --max-tokens` — max tokens per response (default: 16384)
 - `-t / --temperature` — sampling temperature (default: 0.7)
 - `--system` — system prompt
 - `--no-think` — disable thinking mode (see below)

@@ -10,7 +10,7 @@ from mlx_lm.generate import make_sampler
 
 MODEL_ID = "mlx-community/Qwen3.5-35B-A3B-4bit"
 
-DEFAULT_MAX_TOKENS = 4096
+DEFAULT_MAX_TOKENS = 16384
 DEFAULT_TEMP = 0.7
 DEFAULT_SYSTEM = "You are Qwen, a helpful AI assistant. Be concise and accurate."
 

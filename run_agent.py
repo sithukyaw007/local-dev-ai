@@ -18,7 +18,7 @@ from tools import web_search
 load_dotenv()
 
 DEFAULT_PORT = 8000
-DEFAULT_MAX_TOKENS = 4096
+DEFAULT_MAX_TOKENS = 16384
 DEFAULT_TEMP = 0.7
 DEFAULT_SYSTEM = (
     "You are a helpful AI assistant with access to web search. "

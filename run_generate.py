@@ -11,7 +11,7 @@ from mlx_lm.generate import make_sampler
 MODEL_ID = "mlx-community/Qwen3.5-35B-A3B-4bit"
 
 DEFAULT_PROMPT = "Explain the Mixture-of-Experts architecture in 3 sentences."
-DEFAULT_MAX_TOKENS = 2048
+DEFAULT_MAX_TOKENS = 8192
 DEFAULT_TEMP = 0.7
 
 
