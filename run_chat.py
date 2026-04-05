@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Interactive chat with Qwen3.5-35B-A3B via MLX-LM with streaming output."""
+"""Interactive chat with a local LLM via MLX-LM with streaming output.
+
+Supports multiple models (Qwen3.5, Gemma 4, etc.) via the --model flag.
+"""
 
 import argparse
 import sys
@@ -8,11 +11,11 @@ from mlx_lm import load, stream_generate
 from mlx_lm.generate import make_sampler
 
 
-MODEL_ID = "mlx-community/Qwen3.5-35B-A3B-4bit"
+DEFAULT_MODEL = "mlx-community/Qwen3.5-35B-A3B-4bit"
 
 DEFAULT_MAX_TOKENS = 16384
 DEFAULT_TEMP = 0.7
-DEFAULT_SYSTEM = "You are Qwen, a helpful AI assistant. Be concise and accurate."
+DEFAULT_SYSTEM = "You are a helpful AI assistant. Be concise and accurate."
 
 
 def build_prompt(tokenizer, messages: list[dict], enable_thinking: bool = True) -> str:
@@ -24,12 +27,12 @@ def build_prompt(tokenizer, messages: list[dict], enable_thinking: bool = True) 
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Chat with Qwen3.5-35B-A3B (MLX)")
+    parser = argparse.ArgumentParser(description="Chat with a local LLM via MLX")
     parser.add_argument("-m", "--max-tokens", type=int, default=DEFAULT_MAX_TOKENS, help="Max tokens per response")
     parser.add_argument("-t", "--temperature", type=float, default=DEFAULT_TEMP, help="Sampling temperature")
     parser.add_argument("--top-p", type=float, default=0.9, help="Top-p (nucleus) sampling")
     parser.add_argument("--system", default=DEFAULT_SYSTEM, help="System prompt")
-    parser.add_argument("--model", default=MODEL_ID, help="HuggingFace model ID")
+    parser.add_argument("--model", default=DEFAULT_MODEL, help="HuggingFace model ID")
     parser.add_argument("--no-think", action="store_true",
                         help="Disable thinking mode (faster, fewer tokens, but less reasoning)")
     args = parser.parse_args()

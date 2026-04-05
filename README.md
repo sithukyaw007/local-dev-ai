@@ -1,17 +1,15 @@
-# Local Mac AI — Qwen3.5-35B-A3B on MLX
+# Local Mac AI — Run LLMs on Apple Silicon via MLX
 
-Run **Qwen3.5-35B-A3B** (4-bit quantized) locally on Apple Silicon via [MLX-LM](https://github.com/ml-explore/mlx-examples/tree/main/llms/mlx_lm) for maximum performance. Includes an **agent with web search** via tool calling.
+Run large language models locally on Apple Silicon via [MLX-LM](https://github.com/ml-explore/mlx-examples/tree/main/llms/mlx_lm) for maximum performance. Includes an **agent with web search** via tool calling.
 
-## Model Info
+## Supported Models
 
-| Property | Value |
-|----------|-------|
-| Model | [mlx-community/Qwen3.5-35B-A3B-4bit](https://huggingface.co/mlx-community/Qwen3.5-35B-A3B-4bit) |
-| Architecture | Mixture-of-Experts (MoE) — 35B total, 3B active per token |
-| Quantization | 4-bit (~20 GB download) |
-| Context Window | 262,144 tokens |
-| RAM Usage | ~20–22 GB at inference |
-| License | Apache 2.0 |
+| Model | ID | Architecture | Active Params | RAM Usage | Context |
+|-------|-----|-------------|---------------|-----------|---------|
+| **Qwen3.5-35B-A3B** (default) | `mlx-community/Qwen3.5-35B-A3B-4bit` | MoE — 35B total | 3B | ~20–22 GB | 262K |
+| **Gemma 4 26B-A4B** | `unsloth/gemma-4-26b-a4b-it-UD-MLX-4bit` | MoE — 26B total | 3.8B | ~15–18 GB | 256K |
+
+Both models are 4-bit quantized, Apache 2.0 licensed, and support thinking/reasoning mode.
 
 ## Prerequisites
 
@@ -22,15 +20,12 @@ Run **Qwen3.5-35B-A3B** (4-bit quantized) locally on Apple Silicon via [MLX-LM](
 
 ## Setup
 
-```bash
-# Clone/navigate to project
-cd /path/to/local-mac-ai
+### Default Setup (Qwen3.5)
 
-# Create and activate virtual environment
+```bash
+cd /path/to/local-mac-ai
 python3 -m venv .venv
 source .venv/bin/activate
-
-# Install dependencies
 pip install -r requirements.txt
 
 # Configure environment (required for web search agent)
@@ -38,21 +33,44 @@ cp .env.example .env
 # Edit .env and add your TAVILY_API_KEY
 ```
 
+### Gemma 4 Setup (Optional)
+
+Gemma 4 requires a separate venv with patched `mlx-lm` (upstream MLX support is pending):
+
+```bash
+# One-command install via Unsloth (creates ~/.unsloth/unsloth_gemma4_mlx/)
+curl -fsSL https://raw.githubusercontent.com/unslothai/unsloth/refs/heads/main/install_gemma4_mlx.sh | sh
+
+# Verify it works
+source ~/.unsloth/unsloth_gemma4_mlx/bin/activate
+python -m mlx_lm chat --model unsloth/gemma-4-26b-a4b-it-UD-MLX-4bit --max-tokens 200
+```
+
 ## Usage
 
 ### 1. Single Prompt Generation (Direct, No Server)
 
 ```bash
+# Default model (Qwen3.5)
 python run_generate.py --prompt "What is quantum computing?"
 python run_generate.py --prompt "Write a Python quicksort" --max-tokens 1024 --temperature 0.3
+
+# Gemma 4 (activate Unsloth venv first)
+source ~/.unsloth/unsloth_gemma4_mlx/bin/activate
+python run_generate.py --model unsloth/gemma-4-26b-a4b-it-UD-MLX-4bit --prompt "What is quantum computing?"
 ```
 
 ### 2. Interactive Chat (Direct, No Server)
 
 ```bash
+# Default model (Qwen3.5)
 python run_chat.py
 python run_chat.py --temperature 0.3 --max-tokens 2048
 python run_chat.py --system "You are a senior Python developer. Be concise."
+
+# Gemma 4
+source ~/.unsloth/unsloth_gemma4_mlx/bin/activate
+python run_chat.py --model unsloth/gemma-4-26b-a4b-it-UD-MLX-4bit
 ```
 
 ### 3. Agent with Web Search (Server + Tool Calling)
@@ -61,8 +79,12 @@ This mode gives the model access to real-time web search via Tavily.
 
 **Step 1: Start the server** (in a separate terminal):
 ```bash
+# Default model (Qwen3.5)
 ./start_server.sh              # default: port 8000, DEBUG logging
 ./start_server.sh 8000 INFO    # INFO logging (less verbose)
+
+# Gemma 4 — pass model as 3rd argument (auto-activates Unsloth venv)
+./start_server.sh 8000 DEBUG unsloth/gemma-4-26b-a4b-it-UD-MLX-4bit
 ```
 
 **Step 2: Stream the logs** (in another terminal):
@@ -103,12 +125,12 @@ The agent automatically decides when to search the web vs. answer from knowledge
 
 ## Thinking Mode
 
-Qwen3.5 has a **thinking mode** (enabled by default) that generates internal reasoning in `<think>...</think>` tags before producing the visible answer. This improves quality on complex reasoning/coding/math tasks but consumes **~700-750 extra tokens** per response.
+Both Qwen3.5 and Gemma 4 have a **thinking mode** (enabled by default) that generates internal reasoning before producing the visible answer. This improves quality on complex reasoning/coding/math tasks but consumes extra tokens.
 
-| Mode | Tokens for "What is Python?" | Quality | Speed |
-|------|------------------------------|---------|-------|
-| **Thinking ON** (default) | ~795 (744 thinking + 51 answer) | Best for reasoning | Slower |
-| **Thinking OFF** (`--no-think`) | ~57 (answer only) | Good for simple Q&A | ~14x fewer tokens |
+| Model | Thinking Tags | Overhead |
+|-------|--------------|----------|
+| Qwen3.5 | `<think>...</think>` | ~700–750 tokens |
+| Gemma 4 | `<\|channel>thought...<channel\|>` | Varies |
 
 ```bash
 # Default: thinking enabled (better reasoning, uses more tokens)
@@ -126,15 +148,16 @@ python run_agent.py --no-think
 ┌──────────────────────────────────────────────────────┐
 │ Direct Mode (run_chat.py / run_generate.py)          │
 │   User → mlx-lm (in-process) → Response             │
+│   Supports: --model <any MLX model ID>               │
 └──────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────┐
 │ Agent Mode (run_agent.py)                            │
 │   User → OpenAI SDK → mlx-openai-server (localhost)  │
-│     → Qwen3.5 decides: answer directly OR tool_call  │
-│     → If tool_call: execute Tavily search             │
-│     → Feed search results back to model               │
-│     → Final answer with real-time data                │
+│     → Model decides: answer directly OR tool_call    │
+│     → If tool_call: execute Tavily search            │
+│     → Feed search results back to model              │
+│     → Final answer with real-time data               │
 └──────────────────────────────────────────────────────┘
 ```
 
@@ -184,3 +207,4 @@ Create a new file in `tools/` following the pattern in `tools/web_search.py`:
 
 - **Q8 quantization**: `--model mlx-community/Qwen3.5-35B-A3B-8bit` (better quality, ~35 GB RAM)
 - **Multimodal (vision)**: `pip install mlx-vlm` and use `mlx-community/Qwen3.5-35B-A3B-4bit` with image prompts
+- **When mlx-lm adds native Gemma 4 support**: You can switch to the standard `.venv` for Gemma 4 too (no separate Unsloth venv needed). Check [mlx-lm releases](https://github.com/ml-explore/mlx-examples/releases) for updates.

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Single-prompt text generation using Qwen3.5-35B-A3B via MLX-LM."""
+"""Single-prompt text generation using a local LLM via MLX-LM.
+
+Supports multiple models (Qwen3.5, Gemma 4, etc.) via the --model flag.
+"""
 
 import argparse
 import time
@@ -8,7 +11,7 @@ from mlx_lm import load, generate
 from mlx_lm.generate import make_sampler
 
 
-MODEL_ID = "mlx-community/Qwen3.5-35B-A3B-4bit"
+DEFAULT_MODEL = "mlx-community/Qwen3.5-35B-A3B-4bit"
 
 DEFAULT_PROMPT = "Explain the Mixture-of-Experts architecture in 3 sentences."
 DEFAULT_MAX_TOKENS = 8192
@@ -16,12 +19,12 @@ DEFAULT_TEMP = 0.7
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate text with Qwen3.5-35B-A3B (MLX)")
+    parser = argparse.ArgumentParser(description="Generate text with a local LLM via MLX")
     parser.add_argument("-p", "--prompt", default=DEFAULT_PROMPT, help="Input prompt")
     parser.add_argument("-m", "--max-tokens", type=int, default=DEFAULT_MAX_TOKENS, help="Max tokens to generate")
     parser.add_argument("-t", "--temperature", type=float, default=DEFAULT_TEMP, help="Sampling temperature")
     parser.add_argument("--top-p", type=float, default=0.9, help="Top-p (nucleus) sampling")
-    parser.add_argument("--model", default=MODEL_ID, help="HuggingFace model ID")
+    parser.add_argument("--model", default=DEFAULT_MODEL, help="HuggingFace model ID")
     parser.add_argument("--no-think", action="store_true",
                         help="Disable thinking mode (faster, fewer tokens, but less reasoning)")
     args = parser.parse_args()
